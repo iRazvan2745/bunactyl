@@ -1,0 +1,275 @@
+---
+title: "Advanced Features of Bunactyl"
+description: "Explore the powerful advanced features and techniques available in the Bunactyl SDK"
+---
+
+# Advanced Features of Bunactyl
+
+This guide covers advanced techniques and features of the Bunactyl SDK that can help you build more sophisticated applications with the Pterodactyl API.
+
+## Batch Operations
+
+Bunactyl provides efficient ways to handle multiple resources simultaneously.
+
+### Bulk User Management
+
+```typescript
+// Import the Bunactyl SDK
+import { Bunactyl } from 'bunactyl';
+
+// Initialize the client
+const ptero = new Bunactyl({
+  url: process.env.PTERODACTYL_URL,
+  apiKey: process.env.PTERODACTYL_API_KEY
+});
+
+// Process multiple users in a batch
+async function processBatchOfUsers() {
+  const users = await ptero.users.list({ 
+    perPage: 50,
+    page: 1
+  });
+  
+  // Process each user
+  await Promise.all(users.data.map(async (user) => {
+    // Perform operations on each user
+    console.log(`Processing user: ${user.attributes.username}`);
+    
+    // Example: Update user notes
+    await ptero.users.update(user.attributes.id, {
+      notes: `Updated via batch operation - ${new Date().toISOString()}`
+    });
+  }));
+  
+  console.log('Batch user processing complete');
+}
+```
+
+### Server Migration Utilities
+
+```typescript
+// Helper function to migrate a server between nodes
+async function migrateServer(serverId: number, targetNodeId: number) {
+  try {
+    // Get current server details
+    const server = await ptero.servers.getById(serverId);
+    
+    // Prepare migration parameters
+    const migrationOptions = {
+      node_id: targetNodeId,
+      allocation_id: null, // Will be auto-assigned on target node
+      // Maintain the same allocations structure
+      additional_allocations: server.attributes.relationships.allocations.data.map(a => a.attributes.id)
+    };
+    
+    // Perform the migration
+    await ptero.servers.update(serverId, migrationOptions);
+    console.log(`Server ${server.attributes.name} migration initiated to node ${targetNodeId}`);
+    
+    return { success: true, server: server.attributes.name };
+  } catch (error) {
+    console.error(`Migration failed: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+```
+
+## Advanced Querying
+
+Bunactyl supports sophisticated filtering and querying capabilities.
+
+### Filtered Resource Queries
+
+```typescript
+// Get all servers with a specific memory allocation
+async function getHighMemoryServers(minMemoryMB: number) {
+  // Get all servers (paginated)
+  const servers = [];
+  let page = 1;
+  let hasMore = true;
+  
+  while (hasMore) {
+    const response = await ptero.servers.list({ page, perPage: 100 });
+    servers.push(...response.data);
+    
+    // Check if there are more pages
+    hasMore = page * 100 < response.meta.pagination.total;
+    page++;
+  }
+  
+  // Filter servers by memory
+  const highMemoryServers = servers.filter(server => 
+    server.attributes.limits.memory >= minMemoryMB
+  );
+  
+  console.log(`Found ${highMemoryServers.length} servers with ${minMemoryMB}MB+ memory`);
+  return highMemoryServers;
+}
+```
+
+### Advanced Search Patterns
+
+```typescript
+// Search for users or servers matching specific patterns
+async function advancedSearch(query: string) {
+  const results = {
+    users: [],
+    servers: []
+  };
+  
+  // Search users
+  const users = await ptero.users.list();
+  results.users = users.data.filter(user => {
+    const searchableText = [
+      user.attributes.username,
+      user.attributes.email,
+      user.attributes.first_name,
+      user.attributes.last_name
+    ].join(' ').toLowerCase();
+    
+    return searchableText.includes(query.toLowerCase());
+  });
+  
+  // Search servers
+  const servers = await ptero.servers.list();
+  results.servers = servers.data.filter(server => {
+    return server.attributes.name.toLowerCase().includes(query.toLowerCase());
+  });
+  
+  return results;
+}
+```
+
+## Error Handling and Retries
+
+Implement robust error handling and retry mechanisms for production applications.
+
+```typescript
+// Wrapper function with retry logic
+async function withRetry(operation, maxRetries = 3, delay = 1000) {
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.warn(`Attempt ${attempt} failed: ${error.message}`);
+      lastError = error;
+      
+      // Only delay if we're going to retry
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        // Exponential backoff
+        delay *= 2;
+      }
+    }
+  }
+  
+  throw new Error(`Operation failed after ${maxRetries} attempts. Last error: ${lastError.message}`);
+}
+
+// Example usage
+async function createUserWithRetry(userData) {
+  return withRetry(() => ptero.users.create(userData));
+}
+```
+
+## Webhooks and Event Handling
+
+Set up event handling for Pterodactyl webhooks.
+
+```typescript
+// Simple webhook handler for Express
+import express from 'express';
+const app = express();
+
+app.use(express.json());
+
+app.post('/webhook/pterodactyl', (req, res) => {
+  const event = req.body;
+  
+  // Process different event types
+  switch (event.action) {
+    case 'server:created':
+      console.log(`New server created: ${event.data.name}`);
+      break;
+    case 'server:deleted':
+      console.log(`Server deleted: ${event.data.name}`);
+      break;
+    case 'backup:completed':
+      console.log(`Backup completed for server: ${event.data.server_name}`);
+      break;
+    default:
+      console.log(`Unhandled event type: ${event.action}`);
+  }
+  
+  res.status(200).end();
+});
+
+app.listen(3000, () => {
+  console.log('Webhook server listening on port 3000');
+});
+```
+
+## Performance Optimization
+
+Tips and techniques for optimizing Bunactyl SDK performance.
+
+### Connection Pooling
+
+```typescript
+// Create a reusable client with connection pooling
+const poolOptions = {
+  maxSockets: 10,
+  keepAlive: true,
+  keepAliveMsecs: 1000
+};
+
+const ptero = new Bunactyl({
+  url: process.env.PTERODACTYL_URL,
+  apiKey: process.env.PTERODACTYL_API_KEY,
+  httpOptions: {
+    agent: new http.Agent(poolOptions),
+    httpsAgent: new https.Agent(poolOptions)
+  }
+});
+```
+
+### Caching Strategies
+
+```typescript
+// Simple in-memory cache implementation
+const cache = new Map();
+const TTL = 60000; // 1 minute TTL
+
+async function cachedServerFetch(serverId) {
+  const cacheKey = `server:${serverId}`;
+  
+  // Check cache first
+  if (cache.has(cacheKey)) {
+    const { timestamp, data } = cache.get(cacheKey);
+    
+    // If cache is still valid
+    if (Date.now() - timestamp < TTL) {
+      console.log('Cache hit for server', serverId);
+      return data;
+    }
+  }
+  
+  // Fetch from API
+  console.log('Cache miss for server', serverId);
+  const server = await ptero.servers.getById(serverId);
+  
+  // Update cache
+  cache.set(cacheKey, {
+    timestamp: Date.now(),
+    data: server
+  });
+  
+  return server;
+}
+```
+
+## Conclusion
+
+These advanced techniques demonstrate how to leverage the full power of Bunactyl in your applications. By implementing batch operations, advanced querying, error handling, webhooks, and performance optimizations, you can build robust and efficient applications that make the most of the Pterodactyl API.

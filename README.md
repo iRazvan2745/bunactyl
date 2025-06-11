@@ -2,6 +2,8 @@
 
 A comprehensive TypeScript SDK for the Pterodactyl Panel API. This SDK provides a simple and intuitive interface to interact with the Pterodactyl API, making it easier to manage your Pterodactyl instance programmatically.
 
+## Documentation can be found at https://bunactyl.irazz.lol
+
 ## Features
 
 - Complete TypeScript definitions for the Pterodactyl API
