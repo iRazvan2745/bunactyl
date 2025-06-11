@@ -27,5 +27,8 @@
   "devDependencies": {
     "@types/bun": "latest",
     "typescript": "^5"
+  },
+  "dependencies": {
+    "bunactyl": "^1.0.0"
   }
 }

@@ -1,4 +1,4 @@
-import { Bunactyl } from '../src';
+import { Bunactyl } from 'bunactyl';
 
 // Initialize the SDK
 const ptero = new Bunactyl({
