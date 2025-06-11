@@ -1,0 +1,381 @@
+---
+title: "Servers API"
+description: "Managing game servers on your Pterodactyl panel with the Bunactyl SDK"
+---
+
+# Servers API
+
+The Servers API provides methods for managing game servers on your Pterodactyl panel. This includes creating, updating, and deleting servers, as well as modifying their configurations.
+
+## Methods
+
+### List All Servers
+
+Retrieves a paginated list of all servers on your panel.
+
+```typescript
+async list(include?: ServerInclude): Promise<ServersResponse>
+```
+
+**Parameters:**
+- `include` (optional): Resources to include in the response, such as 'allocations', 'user', etc.
+
+**Example:**
+```typescript
+// List all servers
+const servers = await ptero.servers.list();
+
+// List servers with allocations included
+const serversWithAllocations = await ptero.servers.list('allocations');
+```
+
+**Response:**
+```typescript
+{
+  object: 'list',
+  data: [
+    {
+      object: 'server',
+      attributes: {
+        id: 1,
+        external_id: null,
+        uuid: 'e12bb8e0-0e4d-49c3-b927-860e96b5ef76',
+        identifier: 'e12bb8',
+        name: 'Minecraft Server',
+        description: '',
+        suspended: false,
+        limits: {
+          memory: 1024,
+          swap: 0,
+          disk: 5000,
+          io: 500,
+          cpu: 0
+        },
+        feature_limits: {
+          databases: 5,
+          backups: 2,
+          allocations: 5
+        },
+        user: 1,
+        node: 1,
+        allocation: 1,
+        nest: 1,
+        egg: 1,
+        container: {
+          startup_command: 'java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar {{SERVER_JARFILE}}',
+          image: 'quay.io/pterodactyl/core:java',
+          installed: true,
+          environment: {
+            SERVER_JARFILE: 'server.jar',
+            VANILLA_VERSION: 'latest'
+          }
+        },
+        updated_at: '2021-01-01T00:00:00+00:00',
+        created_at: '2021-01-01T00:00:00+00:00'
+      }
+    }
+    // More servers...
+  ],
+  meta: {
+    pagination: {
+      total: 1,
+      count: 1,
+      per_page: 50,
+      current_page: 1,
+      total_pages: 1
+    }
+  }
+}
+```
+
+### Get Server by ID
+
+Retrieves a specific server by its ID.
+
+```typescript
+async getById(id: number | string, include?: ServerInclude): Promise<ServerResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the server to retrieve
+- `include` (optional): Resources to include in the response
+
+**Example:**
+```typescript
+// Get server with ID 1
+const server = await ptero.servers.getById(1);
+
+// Get server with ID 1 and its allocations
+const serverWithAllocations = await ptero.servers.getById(1, 'allocations');
+```
+
+**Response:**
+Same structure as a single server object from the list response.
+
+### Get Server by External ID
+
+Retrieves a specific server by its external ID.
+
+```typescript
+async getByExternalId(externalId: string, include?: ServerInclude): Promise<ServerResponse>
+```
+
+**Parameters:**
+- `externalId`: The external ID of the server to retrieve
+- `include` (optional): Resources to include in the response
+
+**Example:**
+```typescript
+// Get server with external ID 'ext-123'
+const server = await ptero.servers.getByExternalId('ext-123');
+```
+
+**Response:**
+Same structure as a single server object from the list response.
+
+### Create Server
+
+Creates a new server on your panel.
+
+```typescript
+async create(serverData: CreateServerRequest): Promise<ServerResponse>
+```
+
+**Parameters:**
+- `serverData`: Server data object with all required properties:
+  ```typescript
+  {
+    name: string;
+    user: number;
+    egg: number;
+    docker_image: string;
+    startup: string;
+    environment: Record<string, string>;
+    limits: {
+      memory: number;
+      swap: number;
+      disk: number;
+      io: number;
+      cpu: number;
+    };
+    feature_limits: {
+      databases: number;
+      allocations: number;
+      backups: number;
+    };
+    allocation: {
+      default: number;
+      additional: number[];
+    };
+    start_on_completion?: boolean;
+    external_id?: string;
+    oom_disabled?: boolean;
+  }
+  ```
+
+**Example:**
+```typescript
+const newServer = await ptero.servers.create({
+  name: 'Test Server',
+  user: 1,
+  egg: 1,
+  docker_image: 'quay.io/pterodactyl/core:java',
+  startup: 'java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar {{SERVER_JARFILE}}',
+  environment: {
+    SERVER_JARFILE: 'server.jar',
+    VANILLA_VERSION: 'latest',
+  },
+  limits: {
+    memory: 1024,
+    swap: 0,
+    disk: 5000,
+    io: 500,
+    cpu: 0
+  },
+  feature_limits: {
+    databases: 5,
+    allocations: 5,
+    backups: 2
+  },
+  allocation: {
+    default: 1,
+    additional: []
+  }
+});
+```
+
+**Response:**
+Same structure as a single server object from the list response.
+
+### Update Server Details
+
+Updates the basic details of an existing server.
+
+```typescript
+async updateDetails(id: number | string, details: UpdateServerDetails): Promise<ServerResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the server to update
+- `details`: Server details to update:
+  ```typescript
+  {
+    name?: string;
+    user?: number;
+    external_id?: string | null;
+    description?: string | null;
+  }
+  ```
+
+**Example:**
+```typescript
+const updatedServer = await ptero.servers.updateDetails(1, {
+  name: 'Updated Server Name',
+  description: 'This server has been updated'
+});
+```
+
+**Response:**
+Same structure as a single server object from the list response.
+
+### Update Server Build
+
+Updates the build configuration of an existing server.
+
+```typescript
+async updateBuild(id: number | string, buildConfig: UpdateServerBuild): Promise<ServerResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the server to update
+- `buildConfig`: Server build configuration to update:
+  ```typescript
+  {
+    allocation?: number;
+    memory?: number;
+    swap?: number;
+    disk?: number;
+    io?: number;
+    cpu?: number;
+    threads?: number | null;
+    feature_limits?: {
+      databases?: number;
+      allocations?: number;
+      backups?: number;
+    };
+    add_allocations?: number[];
+    remove_allocations?: number[];
+    oom_disabled?: boolean;
+  }
+  ```
+
+**Example:**
+```typescript
+const updatedServer = await ptero.servers.updateBuild(1, {
+  memory: 2048,
+  disk: 10000,
+  feature_limits: {
+    databases: 10,
+    backups: 5
+  }
+});
+```
+
+**Response:**
+Same structure as a single server object from the list response.
+
+### Update Server Startup
+
+Updates the startup configuration of an existing server.
+
+```typescript
+async updateStartup(id: number | string, startupConfig: UpdateServerStartup): Promise<ServerResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the server to update
+- `startupConfig`: Server startup configuration to update:
+  ```typescript
+  {
+    startup?: string;
+    environment?: Record<string, string>;
+    egg?: number;
+    image?: string;
+    skip_scripts?: boolean;
+  }
+  ```
+
+**Example:**
+```typescript
+const updatedServer = await ptero.servers.updateStartup(1, {
+  startup: 'java -Xms256M -Xmx{{SERVER_MEMORY}}M -jar {{SERVER_JARFILE}}',
+  environment: {
+    SERVER_JARFILE: 'paper.jar',
+    MINECRAFT_VERSION: '1.19'
+  }
+});
+```
+
+**Response:**
+Same structure as a single server object from the list response.
+
+### Delete Server
+
+Deletes a server from your panel.
+
+```typescript
+async delete(id: number | string): Promise<void>
+```
+
+**Parameters:**
+- `id`: The ID of the server to delete
+
+**Example:**
+```typescript
+await ptero.servers.delete(1);
+```
+
+**Response:**
+This method does not return a response body.
+
+## Related Interfaces
+
+### Server Interface
+
+```typescript
+interface Server {
+  id: number;
+  external_id: string | null;
+  uuid: string;
+  identifier: string;
+  name: string;
+  description: string;
+  suspended: boolean;
+  limits: {
+    memory: number;
+    swap: number;
+    disk: number;
+    io: number;
+    cpu: number;
+    threads?: number | null;
+  };
+  feature_limits: {
+    databases: number;
+    allocations: number;
+    backups: number;
+  };
+  user: number;
+  node: number;
+  allocation: number;
+  nest: number;
+  egg: number;
+  container: {
+    startup_command: string;
+    image: string;
+    installed: boolean;
+    environment: Record<string, string>;
+  };
+  updated_at: string;
+  created_at: string;
+}
+```

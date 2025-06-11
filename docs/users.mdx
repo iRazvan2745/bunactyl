@@ -1,0 +1,270 @@
+---
+title: "Users API"
+description: "Managing users on your Pterodactyl panel with the Bunactyl SDK"
+---
+
+# Users API
+
+The Users API provides methods for managing users on your Pterodactyl panel. It allows you to list, create, update, and delete users.
+
+## Methods
+
+### List All Users
+
+Retrieves a paginated list of all users on your panel.
+
+```typescript
+async list(
+  include?: UserInclude,
+  filter?: UserFilter,
+  sort?: UserSort
+): Promise<UsersResponse>
+```
+
+**Parameters:**
+- `include` (optional): Resources to include in the response. Can be `'servers'` or `null`.
+- `filter` (optional): Filters to apply to the user list:
+  ```typescript
+  {
+    email?: string;
+    uuid?: string;
+    username?: string;
+    external_id?: string;
+  }
+  ```
+- `sort` (optional): Sort parameter:
+  ```typescript
+  {
+    sort?: 'id' | 'uuid';
+  }
+  ```
+
+**Example:**
+```typescript
+// List all users
+const users = await ptero.users.list();
+
+// List users with their servers
+const usersWithServers = await ptero.users.list('servers');
+
+// Filter users by email
+const filteredUsers = await ptero.users.list(null, { email: 'example@domain.com' });
+
+// Sort users by UUID
+const sortedUsers = await ptero.users.list(null, null, { sort: 'uuid' });
+```
+
+**Response:**
+```typescript
+{
+  object: 'list',
+  data: [
+    {
+      object: 'user',
+      attributes: {
+        id: 1,
+        external_id: null,
+        uuid: 'e12bb8e0-0e4d-49c3-b927-860e96b5ef76',
+        username: 'admin',
+        email: 'admin@example.com',
+        first_name: 'Admin',
+        last_name: 'User',
+        language: 'en',
+        root_admin: true,
+        '2fa': false,
+        created_at: '2021-01-01T00:00:00+00:00',
+        updated_at: '2021-01-01T00:00:00+00:00'
+      }
+    }
+    // More users...
+  ],
+  meta: {
+    pagination: {
+      total: 1,
+      count: 1,
+      per_page: 50,
+      current_page: 1,
+      total_pages: 1
+    }
+  }
+}
+```
+
+### Get User by ID
+
+Retrieves a specific user by their ID.
+
+```typescript
+async getById(id: number | string, include?: UserInclude): Promise<UserResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the user to retrieve
+- `include` (optional): Resources to include in the response. Can be `'servers'` or `null`.
+
+**Example:**
+```typescript
+// Get user with ID 1
+const user = await ptero.users.getById(1);
+
+// Get user with ID 1 and their servers
+const userWithServers = await ptero.users.getById(1, 'servers');
+```
+
+**Response:**
+```typescript
+{
+  object: 'user',
+  attributes: {
+    id: 1,
+    external_id: null,
+    uuid: 'e12bb8e0-0e4d-49c3-b927-860e96b5ef76',
+    username: 'admin',
+    email: 'admin@example.com',
+    first_name: 'Admin',
+    last_name: 'User',
+    language: 'en',
+    root_admin: true,
+    '2fa': false,
+    created_at: '2021-01-01T00:00:00+00:00',
+    updated_at: '2021-01-01T00:00:00+00:00'
+  }
+}
+```
+
+### Get User by External ID
+
+Retrieves a specific user by their External ID.
+
+```typescript
+async getByExternalId(externalId: string, include?: UserInclude): Promise<UserResponse>
+```
+
+**Parameters:**
+- `externalId`: The External ID of the user to retrieve
+- `include` (optional): Resources to include in the response. Can be `'servers'` or `null`.
+
+**Example:**
+```typescript
+// Get user with external ID 'ext-123'
+const user = await ptero.users.getByExternalId('ext-123');
+
+// Get user with external ID 'ext-123' and their servers
+const userWithServers = await ptero.users.getByExternalId('ext-123', 'servers');
+```
+
+**Response:**
+Same structure as the "Get User by ID" response.
+
+### Create User
+
+Creates a new user on your panel.
+
+```typescript
+async create(userData: CreateUserRequest): Promise<UserResponse>
+```
+
+**Parameters:**
+- `userData`: User data object with the following properties:
+  ```typescript
+  {
+    email: string;
+    username: string;
+    first_name: string;
+    last_name: string;
+    external_id?: string;
+    password?: string;
+    root_admin?: boolean;
+    language?: string;
+  }
+  ```
+
+**Example:**
+```typescript
+const newUser = await ptero.users.create({
+  email: 'user@example.com',
+  username: 'newuser',
+  first_name: 'New',
+  last_name: 'User',
+  password: 'securepassword',  // Optional, will be generated if not provided
+  language: 'en',              // Optional, defaults to 'en'
+  root_admin: false            // Optional, defaults to false
+});
+```
+
+**Response:**
+Same structure as the "Get User by ID" response.
+
+### Update User
+
+Updates an existing user on your panel.
+
+```typescript
+async update(id: number | string, userData: UpdateUserRequest): Promise<UserResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the user to update
+- `userData`: User data to update with the following properties (all optional):
+  ```typescript
+  {
+    email?: string;
+    username?: string;
+    first_name?: string;
+    last_name?: string;
+    external_id?: string;
+    password?: string;
+    root_admin?: boolean;
+    language?: string;
+  }
+  ```
+
+**Example:**
+```typescript
+const updatedUser = await ptero.users.update(1, {
+  first_name: 'Updated',
+  last_name: 'Name'
+});
+```
+
+**Response:**
+Same structure as the "Get User by ID" response.
+
+### Delete User
+
+Deletes a user from your panel.
+
+```typescript
+async delete(id: number | string): Promise<void>
+```
+
+**Parameters:**
+- `id`: The ID of the user to delete
+
+**Example:**
+```typescript
+await ptero.users.delete(1);
+```
+
+**Response:**
+This method does not return a response body.
+
+## Related Interfaces
+
+### User
+
+```typescript
+interface User {
+  id: number;
+  external_id: string | null;
+  uuid: string;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  language: string;
+  root_admin: boolean;
+  '2fa': boolean;
+  created_at: string;
+  updated_at: string;
+}

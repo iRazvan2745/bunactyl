@@ -1,0 +1,143 @@
+---
+title: "Getting Started with Bunactyl"
+description: "Learn how to set up and use the Bunactyl SDK for Pterodactyl"
+---
+
+# Getting Started with Bunactyl
+
+This guide will walk you through setting up the Bunactyl SDK and making your first API calls to your Pterodactyl panel.
+
+## Prerequisites
+
+- A Pterodactyl Panel instance
+- An API key with appropriate permissions
+- Node.js or Bun installed
+
+## Installation
+
+Install the Bunactyl package using npm or Bun:
+
+```bash
+# Using npm
+npm install bunactyl
+
+# Using Bun
+bun add bunactyl
+```
+
+## Setting Up Your Client
+
+The first step is to initialize the Bunactyl client with your Pterodactyl panel URL and API key:
+
+```typescript
+import { Bunactyl } from 'bunactyl';
+
+const ptero = new Bunactyl({
+  url: 'https://your-pterodactyl-panel.com',
+  apiKey: 'your-api-key-here',
+  userAgent: 'YourApp/1.0' // optional but recommended
+});
+```
+
+### Environment Variables
+
+For improved security, you can use environment variables to store sensitive information:
+
+```typescript
+const ptero = new Bunactyl({
+  url: process.env.PTERODACTYL_URL,
+  apiKey: process.env.PTERODACTYL_API_KEY,
+  userAgent: process.env.USER_AGENT
+});
+```
+
+## Basic Usage Examples
+
+### Listing Resources
+
+```typescript
+// List all users
+const users = await ptero.users.list();
+console.log(`Found ${users.meta.pagination.total} users`);
+
+// List all servers
+const servers = await ptero.servers.list();
+console.log(`Found ${servers.meta.pagination.total} servers`);
+```
+
+### Getting Specific Resources
+
+```typescript
+// Get a user by ID
+const user = await ptero.users.getById(1);
+console.log(`User: ${user.attributes.username}`);
+
+// Get a server by ID
+const server = await ptero.servers.getById(1);
+console.log(`Server: ${server.attributes.name}`);
+```
+
+### Creating Resources
+
+```typescript
+// Create a new user
+const newUser = await ptero.users.create({
+  email: 'user@example.com',
+  username: 'newuser',
+  first_name: 'New',
+  last_name: 'User',
+  password: 'securepassword'
+});
+
+// Create a new server
+const newServer = await ptero.servers.create({
+  name: 'Test Server',
+  user: 1,
+  egg: 1,
+  docker_image: 'quay.io/pterodactyl/core:java',
+  startup: 'java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar {{SERVER_JARFILE}}',
+  environment: {
+    SERVER_JARFILE: 'server.jar',
+    VANILLA_VERSION: 'latest',
+  },
+  limits: {
+    memory: 1024,
+    swap: 0,
+    disk: 5000,
+    io: 500,
+    cpu: 0
+  },
+  feature_limits: {
+    databases: 5,
+    allocations: 5,
+    backups: 2
+  },
+  allocation: {
+    default: 1,
+    additional: []
+  }
+});
+```
+
+## Error Handling
+
+The SDK uses standard Promise-based error handling. You can use try/catch blocks to handle errors:
+
+```typescript
+try {
+  const user = await ptero.users.getById(999);
+  console.log(user);
+} catch (error) {
+  console.error('Error fetching user:', error);
+}
+```
+
+## Next Steps
+
+Explore the documentation for each resource type to learn about all available methods:
+
+- [Users](/docs/users)
+- [Nodes](/docs/nodes)
+- [Servers](/docs/servers)
+- [Locations](/docs/locations)
+- [Allocations](/docs/allocations)

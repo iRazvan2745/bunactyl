@@ -1,0 +1,55 @@
+---
+title: "Bunactyl SDK Documentation"
+description: "A comprehensive TypeScript SDK for the Pterodactyl Panel API"
+---
+
+# Bunactyl - Pterodactyl TypeScript SDK
+
+Welcome to the official documentation for Bunactyl, a comprehensive TypeScript SDK for the Pterodactyl Panel API. This SDK provides a simple and intuitive interface to interact with the Pterodactyl API, making it easier to manage your Pterodactyl instance programmatically.
+
+## Features
+
+- Complete TypeScript definitions for the Pterodactyl API
+- Promise-based API with async/await support
+- Full coverage of the Pterodactyl Application API endpoints
+- Built with Bun's fetch API
+- Comprehensive documentation and examples
+
+## Installation
+
+```bash
+# Using npm
+npm install bunactyl
+
+# Using Bun
+bun add bunactyl
+```
+
+## Quick Start
+
+```typescript
+import { Bunactyl } from 'bunactyl';
+
+// Initialize the client
+const ptero = new Bunactyl({
+  url: 'https://your-pterodactyl-panel.com',
+  apiKey: 'your-api-key-here',
+  userAgent: 'YourApp/1.0' // optional
+});
+
+// Example: List all users
+const users = await ptero.users.list();
+console.log(`Found ${users.meta.pagination.total} users`);
+```
+
+## Available Resources
+
+- [Users](/docs/users) - Manage users on your Pterodactyl panel
+- [Nodes](/docs/nodes) - Manage nodes (servers that run game instances)
+- [Servers](/docs/servers) - Manage game servers
+- [Locations](/docs/locations) - Manage server locations
+- [Allocations](/docs/allocations) - Manage IP allocations
+
+## Getting Started
+
+Check out the [Getting Started](/docs/getting-started) guide for detailed instructions on setting up and using the Bunactyl SDK.

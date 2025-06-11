@@ -1,0 +1,322 @@
+---
+title: "Nodes API"
+description: "Managing nodes on your Pterodactyl panel with the Bunactyl SDK"
+---
+
+# Nodes API
+
+The Nodes API provides methods for managing nodes on your Pterodactyl panel. These are the physical or virtual servers that run your game instances.
+
+## Methods
+
+### List All Nodes
+
+Retrieves a paginated list of all nodes on your panel.
+
+```typescript
+async list(include?: NodeInclude): Promise<NodesResponse>
+```
+
+**Parameters:**
+- `include` (optional): Resources to include in the response. Can be a specific related resource or `null`.
+
+**Example:**
+```typescript
+// List all nodes
+const nodes = await ptero.nodes.list();
+
+// List nodes with specific includes
+const nodesWithIncludes = await ptero.nodes.list('allocations');
+```
+
+**Response:**
+```typescript
+{
+  object: 'list',
+  data: [
+    {
+      object: 'node',
+      attributes: {
+        id: 1,
+        uuid: '7f60c9d5-5f28-4950-a547-d08968192d5e',
+        public: true,
+        name: 'US Node 1',
+        description: 'Main US Node',
+        location_id: 1,
+        fqdn: 'node1.example.com',
+        scheme: 'https',
+        behind_proxy: false,
+        maintenance_mode: false,
+        memory: 8192,
+        memory_overallocate: 0,
+        disk: 50000,
+        disk_overallocate: 0,
+        upload_size: 100,
+        daemon_listen: 8080,
+        daemon_sftp: 2022,
+        daemon_base: '/var/lib/pterodactyl',
+        created_at: '2021-01-01T00:00:00+00:00',
+        updated_at: '2021-01-01T00:00:00+00:00'
+      }
+    }
+    // More nodes...
+  ],
+  meta: {
+    pagination: {
+      total: 1,
+      count: 1,
+      per_page: 50,
+      current_page: 1,
+      total_pages: 1
+    }
+  }
+}
+```
+
+### Get Node by ID
+
+Retrieves a specific node by its ID.
+
+```typescript
+async getById(id: number | string, include?: NodeInclude): Promise<NodeResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the node to retrieve
+- `include` (optional): Resources to include in the response
+
+**Example:**
+```typescript
+// Get node with ID 1
+const node = await ptero.nodes.getById(1);
+
+// Get node with ID 1 and its allocations
+const nodeWithAllocations = await ptero.nodes.getById(1, 'allocations');
+```
+
+**Response:**
+```typescript
+{
+  object: 'node',
+  attributes: {
+    id: 1,
+    uuid: '7f60c9d5-5f28-4950-a547-d08968192d5e',
+    public: true,
+    name: 'US Node 1',
+    description: 'Main US Node',
+    location_id: 1,
+    fqdn: 'node1.example.com',
+    scheme: 'https',
+    behind_proxy: false,
+    maintenance_mode: false,
+    memory: 8192,
+    memory_overallocate: 0,
+    disk: 50000,
+    disk_overallocate: 0,
+    upload_size: 100,
+    daemon_listen: 8080,
+    daemon_sftp: 2022,
+    daemon_base: '/var/lib/pterodactyl',
+    created_at: '2021-01-01T00:00:00+00:00',
+    updated_at: '2021-01-01T00:00:00+00:00'
+  }
+}
+```
+
+### Get Node Configuration
+
+Retrieves the configuration for a specific node, which can be used to configure the Wings daemon.
+
+```typescript
+async getConfiguration(id: number | string): Promise<NodeConfiguration>
+```
+
+**Parameters:**
+- `id`: The ID of the node to get configuration for
+
+**Example:**
+```typescript
+// Get configuration for node with ID 1
+const config = await ptero.nodes.getConfiguration(1);
+```
+
+**Response:**
+```typescript
+{
+  debug: false,
+  uuid: '7f60c9d5-5f28-4950-a547-d08968192d5e',
+  token_id: 'ptlc_abc123',
+  token: 'pterodactyl.token',
+  api: {
+    host: 'https://your-panel.com',
+    ssl: {
+      enabled: true
+    }
+  },
+  system: {
+    data: '/var/lib/pterodactyl',
+    sftp: {
+      bind_port: 2022
+    }
+  },
+  allowed_mounts: [],
+  remote: '0.0.0.0'
+}
+```
+
+### Create Node
+
+Creates a new node on your panel.
+
+```typescript
+async create(nodeData: CreateNodeRequest): Promise<NodeResponse>
+```
+
+**Parameters:**
+- `nodeData`: Node data object with the required properties:
+  ```typescript
+  {
+    name: string;
+    location_id: number;
+    fqdn: string;
+    scheme: 'http' | 'https';
+    memory: number;
+    memory_overallocate?: number;
+    disk: number;
+    disk_overallocate?: number;
+    upload_size?: number;
+    daemon_listen?: number;
+    daemon_sftp?: number;
+    daemon_base?: string;
+    behind_proxy?: boolean;
+    public?: boolean;
+    maintenance_mode?: boolean;
+    description?: string | null;
+  }
+  ```
+
+**Example:**
+```typescript
+const newNode = await ptero.nodes.create({
+  name: 'New Node',
+  location_id: 1,
+  fqdn: 'node2.example.com',
+  scheme: 'https',
+  memory: 8192,
+  disk: 50000,
+  upload_size: 100,
+  daemon_sftp: 2022,
+  daemon_listen: 8080
+});
+```
+
+**Response:**
+Same structure as the "Get Node by ID" response.
+
+### Update Node
+
+Updates an existing node on your panel.
+
+```typescript
+async update(id: number | string, nodeData: UpdateNodeRequest): Promise<NodeResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the node to update
+- `nodeData`: Node data to update (all fields are optional):
+  ```typescript
+  {
+    name?: string;
+    description?: string | null;
+    location_id?: number;
+    fqdn?: string;
+    scheme?: 'http' | 'https';
+    behind_proxy?: boolean;
+    maintenance_mode?: boolean;
+    memory?: number;
+    memory_overallocate?: number;
+    disk?: number;
+    disk_overallocate?: number;
+    upload_size?: number;
+    daemon_listen?: number;
+    daemon_sftp?: number;
+    daemon_base?: string;
+    public?: boolean;
+  }
+  ```
+
+**Example:**
+```typescript
+const updatedNode = await ptero.nodes.update(1, {
+  name: 'Updated Node Name',
+  memory: 16384,
+  disk: 100000
+});
+```
+
+**Response:**
+Same structure as the "Get Node by ID" response.
+
+### Delete Node
+
+Deletes a node from your panel.
+
+```typescript
+async delete(id: number | string): Promise<void>
+```
+
+**Parameters:**
+- `id`: The ID of the node to delete
+
+**Example:**
+```typescript
+await ptero.nodes.delete(1);
+```
+
+**Response:**
+This method does not return a response body.
+
+## Related Interfaces
+
+### Node Interface
+
+```typescript
+interface Node {
+  id: number;
+  uuid: string;
+  public: boolean;
+  name: string;
+  description: string | null;
+  location_id: number;
+  fqdn: string;
+  scheme: string;
+  behind_proxy: boolean;
+  maintenance_mode: boolean;
+  memory: number;
+  memory_overallocate: number;
+  disk: number;
+  disk_overallocate: number;
+  upload_size: number;
+  daemon_listen: number;
+  daemon_sftp: number;
+  daemon_base: string;
+  created_at: string;
+  updated_at: string;
+  allocated_resources?: {
+    memory: number;
+    disk: number;
+  };
+}
+```
+
+### Node Configuration Interface
+
+```typescript
+interface NodeConfiguration {
+  debug: boolean;
+  uuid: string;
+  token_id: string;
+  token: string;
+  // Additional configuration properties...
+}
+```

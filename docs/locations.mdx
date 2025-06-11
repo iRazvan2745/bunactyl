@@ -1,0 +1,224 @@
+---
+title: "Locations API"
+description: "Managing server locations on your Pterodactyl panel with the Bunactyl SDK"
+---
+
+# Locations API
+
+The Locations API provides methods for managing server locations on your Pterodactyl panel. Locations are typically physical regions where your nodes are hosted.
+
+## Methods
+
+### List All Locations
+
+Retrieves a paginated list of all locations on your panel.
+
+```typescript
+async list(include?: LocationInclude): Promise<LocationsResponse>
+```
+
+**Parameters:**
+- `include` (optional): Resources to include in the response, such as 'nodes'
+
+**Example:**
+```typescript
+// List all locations
+const locations = await ptero.locations.list();
+
+// List locations with their nodes
+const locationsWithNodes = await ptero.locations.list('nodes');
+```
+
+**Response:**
+```typescript
+{
+  object: 'list',
+  data: [
+    {
+      object: 'location',
+      attributes: {
+        id: 1,
+        short: 'US',
+        long: 'United States',
+        created_at: '2021-01-01T00:00:00+00:00',
+        updated_at: '2021-01-01T00:00:00+00:00'
+      }
+    }
+    // More locations...
+  ],
+  meta: {
+    pagination: {
+      total: 1,
+      count: 1,
+      per_page: 50,
+      current_page: 1,
+      total_pages: 1
+    }
+  }
+}
+```
+
+### Get Location by ID
+
+Retrieves a specific location by its ID.
+
+```typescript
+async getById(id: number | string, include?: LocationInclude): Promise<LocationResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the location to retrieve
+- `include` (optional): Resources to include in the response
+
+**Example:**
+```typescript
+// Get location with ID 1
+const location = await ptero.locations.getById(1);
+
+// Get location with ID 1 and its nodes
+const locationWithNodes = await ptero.locations.getById(1, 'nodes');
+```
+
+**Response:**
+```typescript
+{
+  object: 'location',
+  attributes: {
+    id: 1,
+    short: 'US',
+    long: 'United States',
+    created_at: '2021-01-01T00:00:00+00:00',
+    updated_at: '2021-01-01T00:00:00+00:00'
+  }
+}
+```
+
+### Create Location
+
+Creates a new location on your panel.
+
+```typescript
+async create(locationData: CreateLocationRequest): Promise<LocationResponse>
+```
+
+**Parameters:**
+- `locationData`: Location data object with the required properties:
+  ```typescript
+  {
+    short: string;
+    long: string;
+  }
+  ```
+
+**Example:**
+```typescript
+const newLocation = await ptero.locations.create({
+  short: 'EU',
+  long: 'Europe'
+});
+```
+
+**Response:**
+```typescript
+{
+  object: 'location',
+  attributes: {
+    id: 2,
+    short: 'EU',
+    long: 'Europe',
+    created_at: '2021-01-01T00:00:00+00:00',
+    updated_at: '2021-01-01T00:00:00+00:00'
+  }
+}
+```
+
+### Update Location
+
+Updates an existing location on your panel.
+
+```typescript
+async update(id: number | string, locationData: UpdateLocationRequest): Promise<LocationResponse>
+```
+
+**Parameters:**
+- `id`: The ID of the location to update
+- `locationData`: Location data to update:
+  ```typescript
+  {
+    short?: string;
+    long?: string;
+  }
+  ```
+
+**Example:**
+```typescript
+const updatedLocation = await ptero.locations.update(1, {
+  short: 'USA',
+  long: 'United States of America'
+});
+```
+
+**Response:**
+```typescript
+{
+  object: 'location',
+  attributes: {
+    id: 1,
+    short: 'USA',
+    long: 'United States of America',
+    created_at: '2021-01-01T00:00:00+00:00',
+    updated_at: '2021-01-01T00:00:00+00:00'
+  }
+}
+```
+
+### Delete Location
+
+Deletes a location from your panel.
+
+```typescript
+async delete(id: number | string): Promise<void>
+```
+
+**Parameters:**
+- `id`: The ID of the location to delete
+
+**Example:**
+```typescript
+await ptero.locations.delete(1);
+```
+
+**Response:**
+This method does not return a response body.
+
+## Related Interfaces
+
+### Location Interface
+
+```typescript
+interface Location {
+  id: number;
+  short: string;
+  long: string;
+  created_at: string;
+  updated_at: string;
+}
+```
+
+### Create Location Request
+
+```typescript
+interface CreateLocationRequest {
+  short: string;
+  long: string;
+}
+```
+
+### Update Location Request
+
+```typescript
+interface UpdateLocationRequest {
+  short?: string;
+  long?: string;
+}
+```

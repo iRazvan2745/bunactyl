@@ -1,0 +1,195 @@
+---
+title: "Allocations API"
+description: "Managing IP allocations on your Pterodactyl panel with the Bunactyl SDK"
+---
+
+# Allocations API
+
+The Allocations API provides methods for managing IP allocations on your Pterodactyl panel. Allocations are IP address and port combinations that can be assigned to servers.
+
+## Resource Methods
+
+The Allocations API is unique because it requires a node ID to be specified when creating the resource instance:
+
+```typescript
+// Create an allocations resource for a specific node
+const allocationsResource = ptero.allocations(nodeId);
+```
+
+### List Allocations for a Node
+
+Retrieves a paginated list of all allocations for a specific node.
+
+```typescript
+async list(nodeId: number | string, include?: AllocationInclude): Promise<AllocationsResponse>
+```
+
+**Parameters:**
+- `nodeId`: The ID of the node to list allocations for
+- `include` (optional): Resources to include in the response
+
+**Example:**
+```typescript
+// Get all allocations for node with ID 1
+const allocations = await ptero.allocations(1).list(1);
+```
+
+**Response:**
+```typescript
+{
+  object: 'list',
+  data: [
+    {
+      object: 'allocation',
+      attributes: {
+        id: 1,
+        ip: '192.168.1.1',
+        alias: null,
+        port: 25565,
+        notes: null,
+        assigned: true
+      }
+    },
+    {
+      object: 'allocation',
+      attributes: {
+        id: 2,
+        ip: '192.168.1.1',
+        alias: null,
+        port: 25566,
+        notes: null,
+        assigned: false
+      }
+    }
+    // More allocations...
+  ],
+  meta: {
+    pagination: {
+      total: 2,
+      count: 2,
+      per_page: 50,
+      current_page: 1,
+      total_pages: 1
+    }
+  }
+}
+```
+
+### Create Allocations
+
+Creates new allocations for a specific node.
+
+```typescript
+async create(nodeId: number | string, allocationData: CreateAllocationRequest): Promise<void>
+```
+
+**Parameters:**
+- `nodeId`: The ID of the node to create allocations for
+- `allocationData`: Allocation data object with the required properties:
+  ```typescript
+  {
+    ip: string;
+    ports: string[];
+    alias?: string;
+  }
+  ```
+
+**Example:**
+```typescript
+// Create new allocations for node with ID 1
+await ptero.allocations(1).create(1, {
+  ip: '10.0.0.1',
+  ports: ['25565', '25566', '25567-25570']  // Individual ports or port ranges
+});
+```
+
+**Response:**
+This method does not return a response body.
+
+### Delete Allocation
+
+Deletes an allocation from a specific node.
+
+```typescript
+async delete(nodeId: number | string, allocationId: number | string): Promise<void>
+```
+
+**Parameters:**
+- `nodeId`: The ID of the node that the allocation belongs to
+- `allocationId`: The ID of the allocation to delete
+
+**Example:**
+```typescript
+// Delete allocation with ID 5 from node with ID 1
+await ptero.allocations(1).delete(1, 5);
+```
+
+**Response:**
+This method does not return a response body.
+
+## Related Interfaces
+
+### Allocation Interface
+
+```typescript
+interface Allocation {
+  id: number;
+  ip: string;
+  alias: string | null;
+  port: number;
+  notes: string | null;
+  assigned: boolean;
+}
+```
+
+### Create Allocation Request
+
+```typescript
+interface CreateAllocationRequest {
+  ip: string;
+  ports: string[];
+  alias?: string;
+}
+```
+
+## Important Notes
+
+When working with allocations, note that:
+
+1. You must first select a node using `ptero.allocations(nodeId)` and then call methods on that resource.
+2. When using the `list()` method, you need to pass the nodeId again as the first parameter.
+3. Port ranges in the format '25565-25570' are supported when creating allocations.
+4. Allocations can only be deleted if they are not assigned to a server.
+
+## Example Usage
+
+```typescript
+// Get the list of nodes
+const nodes = await ptero.nodes.list();
+
+if (nodes.data.length > 0) {
+  const nodeId = nodes.data[0].attributes.id;
+  
+  // List allocations for this node
+  const allocations = await ptero.allocations(nodeId).list(nodeId);
+  console.log(`Found ${allocations.meta.pagination.total} allocations`);
+  
+  // Create new allocations on this node
+  await ptero.allocations(nodeId).create(nodeId, {
+    ip: '10.0.0.1',
+    ports: ['25565', '25566-25568']
+  });
+  
+  // Delete an unused allocation (if any exists)
+  const unusedAllocation = allocations.data.find(
+    alloc => !alloc.attributes.assigned
+  );
+  
+  if (unusedAllocation) {
+    await ptero.allocations(nodeId).delete(
+      nodeId, 
+      unusedAllocation.attributes.id
+    );
+  }
+}
+```
